@@ -37,6 +37,8 @@ void printToTTF(String s, int row){
     draw(s, row);
   } while( u8g.nextPage() );
 }
+
+//音高
 int song[] = {
   262, 262, 294, 262, 349, 330,
   262, 262, 294, 262, 392, 349,
@@ -44,6 +46,7 @@ int song[] = {
   466, 466, 440, 349, 392, 349
 };
 
+//音长
 int noteDurations[] = {
   4, 4, 2, 2, 2, 1,
   4, 4, 2, 2, 2, 1,
@@ -74,37 +77,44 @@ void setup_gesture(){
   }
 
 void setup() {
-  pinMode(buzzer_pin, OUTPUT);
-  Serial.begin(9600); //串口初始化
-  Serial.println("Microduino_Motor!");
+  //这个setup函数是内置的，每个程序必须实现这个函数，这个函数在程序运行开始执行一遍，用于初始化各种传感器
+
+  pinMode(buzzer_pin, OUTPUT); //初始化蜂鸣器的输出口
+
+  Serial.begin(9600); //串口初始化，波特率
 
   MotorLeft.begin();   //电机MotorLeft初始化
-  MotorRight.begin();  //电机MotorLeft初始化
+  MotorRight.begin();  //电机MotorRight初始化
 
   strip.begin();   //彩灯初始化
-  strip.show();
-  strip_1.begin();   //彩灯初始化
-  strip_1.show();
+  strip.show(); //灯亮
 
-  setup_gesture();
+  strip_1.begin();   //彩灯初始化
+  strip_1.show(); 
+
+  setup_gesture(); //手势传感器初始化，关于手势传感器：http://wiki.microduinoinc.com/Sensor-Gesture
 }
+
 void turn(int dir){
-   int speed_temmp = 50;
-  MotorLeft.setSpeed(speed_temmp*dir);
-  MotorRight.setSpeed(speed_temmp*dir);
-  delay(1000);
-  MotorLeft.setSpeed(0);
-  MotorRight.setSpeed(0);
+  //用于左转右转的函数
+  int speed_temmp = 50; //转向速度
+  MotorLeft.setSpeed(speed_temmp*dir); //设置电机转速 左侧
+  MotorRight.setSpeed(speed_temmp*dir); //设置电机转速 右侧
+  delay(1000); // 转都多久
+  MotorLeft.setSpeed(0); //停下
+  MotorRight.setSpeed(0); //停下
   }
 void loop() {
+  //这个loop函数是内置的，每个程序必须实现这个函数，在执行setup以后，一直循环执行
 //  song_play();
 //  delay(100);
 //  rainbowCycle(20);
 //  delay(100);
-  int detect = 0;
-  int gesture = 0;
+  int detect = 0; //用于记录是否检测到手势的标志位
+  int gesture = 0; //用于记录检测到手势是什么的的标志位
   if ( gestureSensor.isGestureAvailable() ) {
-    gesture = gestureSensor.readGesture();
+    //判断手势传感器是否有可用数据
+    gesture = gestureSensor.readGesture(); //如果可用，读取手势
     switch ( gesture ) {
       case DIR_UP:
         Serial.println("UP");
@@ -144,18 +154,27 @@ void loop() {
     }
 }
 int state =0;
+
 void song_play(int dir)
 {
+  //奏乐和行走
   for (int thisNote = 0; thisNote < 25; thisNote++)
   {
-    int noteDuration = 1000 / noteDurations[thisNote];
+    //每一个thisNote代表一个音符
+    int noteDuration = 1000 / noteDurations[thisNote]; //每个音符的时长
+
+    //显示音长
     String to_print;
     for (int i = 0; i < noteDurations[thisNote]; i++){
       to_print = to_print + "|||";
       }
     printToTTF(to_print, 2);
+
+    //前进/后退
     MotorLeft.setSpeed((noteDurations[thisNote]-1)*20*dir);   //设置电机MotorLeft速度为100
     MotorRight.setSpeed(-(noteDurations[thisNote]-1)*20*dir);  //设置电机MotorRight速度为100
+    
+    //蜂鸣器
     tone(buzzer_pin, song[thisNote], noteDuration);
     int pauseBetweenNotes = noteDuration * 1.20;
     delay(pauseBetweenNotes);
